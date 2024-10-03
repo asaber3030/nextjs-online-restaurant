@@ -1,26 +1,3 @@
-# Starter Files For NextJS
--------------------------------
-# Installed Libraries & Packages
-- Firebase
-- NextAuth (Credentials Provider)
-- ReactQuery (TanStack Query)
-- Prisma (MySQL)
-- Login, Register Forms with basic UI.
-- ShadCN
-- zod for validation and React-Hook-Form
-- Check `package.json` to see all installed packages
-
-## Run this command to start coding your project directly
-```bash 
-git clone https://github.com/asaber3030/nextjs-project-starter.git
-```
-
-# Login Form:
-![login form](/screenshots/login.png)
-
-# Register Form:
-![login form](/screenshots/register.png)
-
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
