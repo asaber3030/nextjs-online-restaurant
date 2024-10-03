@@ -1,0 +1,203 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+}
+
+// DATABASE_DEPLOY
+// DATABASE_URL
+
+enum PaymentMethodType {
+  Cash
+  Card
+}
+
+enum OrderStatus {
+  JustOrdered
+  Reviewed
+  BeingCooked
+  OutForDelivery
+  Delivered
+}
+
+model User {
+  id          Int    @id @default(autoincrement())
+  name        String
+  password    String
+  phoneNumber String @unique
+  email       String @unique
+
+  adresses Address[]
+  orders   Order[]
+
+  createdAt DateTime? @db.Timestamp()
+  updatedAt DateTime? @db.Timestamp()
+}
+
+model Admin {
+  id          Int    @id @default(autoincrement())
+  name        String
+  password    String
+  phoneNumber String @unique
+  email       String @unique
+
+  createdAt DateTime? @db.Timestamp()
+  updatedAt DateTime? @db.Timestamp()
+}
+
+model Address {
+  id          Int     @id @default(autoincrement())
+  phoneNumber String  @unique
+  streetName  String
+  notes       String?
+  homeNumber  String
+  userId      Int
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orders      Order[]
+}
+
+model Restaurant {
+  id           Int    @id @default(autoincrement())
+  name         String
+  logo         String
+  description  String
+  location     String
+  phoneNumbers String
+  mainPhone    String @default("")
+  facebookUrl  String @default("")
+  instagramUrl String @default("")
+
+  categories Category[]
+  orders     Order[]
+
+  createdAt       DateTime?        @db.Timestamp()
+  updatedAt       DateTime?        @db.Timestamp()
+  offers          Offer[]
+  serviceAccounts ServiceAccount[]
+}
+
+model ServiceAccount {
+  id          Int        @id @default(autoincrement())
+  name        String
+  password    String
+  phoneNumber String     @unique
+  email       String     @unique
+  resturantId Int
+  resturant   Restaurant @relation(fields: [resturantId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  createdAt DateTime? @db.Timestamp()
+  updatedAt DateTime? @db.Timestamp()
+}
+
+model Category {
+  id           Int        @id @default(autoincrement())
+  enName       String
+  arName       String
+  color        String     @default("#000")
+  restaurantId Int
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  items        MenuItem[]
+}
+
+model MenuItem {
+  id          Int      @id @default(autoincrement())
+  image       String   @default("/sandwich.png")
+  arName      String?
+  enName      String?
+  ingredients String?  @default("Onion,Fries")
+  description String?
+  price       Int
+  offerPrice  Int?
+  categoryId  Int
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  orderedItems OrderItem[]
+  offerItems   OfferItems[]
+}
+
+model Offer {
+  id            Int     @id @default(autoincrement())
+  resturantId   Int
+  enTitle       String?
+  arTitle       String?
+  enDescription String?
+  arDescription String?
+  price         Int
+  offerPrice    Int?
+
+  resturant  Restaurant   @relation(fields: [resturantId], references: id, onDelete: Cascade, onUpdate: Cascade)
+  offerItems OfferItems[]
+  orderOffer OrderOffer[]
+}
+
+model OfferItems {
+  id       Int      @id @default(autoincrement())
+  offerId  Int
+  itemId   Int
+  quantity Int      @default(1)
+  offer    Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  item     MenuItem @relation(fields: [itemId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Coupon {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique
+  discount Int     @db.SmallInt
+  usages   Int     @db.SmallInt
+  active   Boolean @default(false)
+  orders   Order[]
+}
+
+model Order {
+  id           Int  @id @default(autoincrement())
+  userId       Int
+  couponId     Int?
+  addressId    Int
+  restaurantId Int
+
+  paymentMethod PaymentMethodType @default(Cash)
+  status        OrderStatus       @default(JustOrdered)
+  statusNumber  Int               @default(1) @db.SmallInt
+
+  discountValue Int @default(0) @db.SmallInt
+  deliveryValue Int @default(0) @db.SmallInt
+  subTotal      Int @default(0)
+  total         Int
+
+  orderedAt     DateTime @db.Timestamp()
+  estimatedTime Int
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  address    Address    @relation(fields: [addressId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  coupon     Coupon?    @relation(fields: [couponId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  items  OrderItem[]
+  offers OrderOffer[]
+}
+
+model OrderItem {
+  id      Int @id @default(autoincrement())
+  orderId Int
+  itemId  Int
+
+  quantity   Int @default(1) @db.SmallInt
+  unitPrice  Int
+  totalPrice Int
+
+  order Order    @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  item  MenuItem @relation(fields: [itemId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model OrderOffer {
+  id      Int @id @default(autoincrement())
+  orderId Int
+  offerId Int
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  offer Offer @relation(fields: [offerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
